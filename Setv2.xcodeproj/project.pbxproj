@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		9E0D47F82C8997F4009E648E /* Truth.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0D47F72C8997F4009E648E /* Truth.swift */; };
+		9E0D47FA2C89D280009E648E /* Wall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0D47F92C89D280009E648E /* Wall.swift */; };
+		9E0D47FC2C89DBBE009E648E /* AspectVGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0D47FB2C89DBBE009E648E /* AspectVGrid.swift */; };
 		9E3070582C886E7F0029AAC0 /* Setv2App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3070572C886E7F0029AAC0 /* Setv2App.swift */; };
 		9E30705A2C886E7F0029AAC0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3070592C886E7F0029AAC0 /* ContentView.swift */; };
 		9E30705C2C886E810029AAC0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9E30705B2C886E810029AAC0 /* Assets.xcassets */; };
@@ -14,6 +17,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		9E0D47F72C8997F4009E648E /* Truth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Truth.swift; sourceTree = "<group>"; };
+		9E0D47F92C89D280009E648E /* Wall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Wall.swift; sourceTree = "<group>"; };
+		9E0D47FB2C89DBBE009E648E /* AspectVGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AspectVGrid.swift; sourceTree = "<group>"; };
 		9E3070542C886E7F0029AAC0 /* Setv2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Setv2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9E3070572C886E7F0029AAC0 /* Setv2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Setv2App.swift; sourceTree = "<group>"; };
 		9E3070592C886E7F0029AAC0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -53,6 +59,9 @@
 			children = (
 				9E3070572C886E7F0029AAC0 /* Setv2App.swift */,
 				9E3070592C886E7F0029AAC0 /* ContentView.swift */,
+				9E0D47FB2C89DBBE009E648E /* AspectVGrid.swift */,
+				9E0D47F72C8997F4009E648E /* Truth.swift */,
+				9E0D47F92C89D280009E648E /* Wall.swift */,
 				9E30705B2C886E810029AAC0 /* Assets.xcassets */,
 				9E30705D2C886E810029AAC0 /* Preview Content */,
 			);
@@ -137,7 +146,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				9E0D47F82C8997F4009E648E /* Truth.swift in Sources */,
+				9E0D47FA2C89D280009E648E /* Wall.swift in Sources */,
 				9E30705A2C886E7F0029AAC0 /* ContentView.swift in Sources */,
+				9E0D47FC2C89DBBE009E648E /* AspectVGrid.swift in Sources */,
 				9E3070582C886E7F0029AAC0 /* Setv2App.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
