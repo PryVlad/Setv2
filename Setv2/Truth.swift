@@ -7,175 +7,158 @@
 
 import Foundation
 
-struct Set<Content:IntOfFeatures> {
-    private(set) var fullDeck: [Card] = []
-    private(set) var deck: [Card] = []
+struct SetRules<Content: FourFeatures> {
+    private(set) var drawDeck: [Card] = []
+    private(set) var visible: [Card] = []
     private(set) var sInd: [Int] = []
+    private let fullDeck: [Card]
     
     init(_ f: (_: Int, _: Int, _: Int, _: Int) -> Content) {
-        let size = 3
+        let size = Global.size
         var i = 0
         for x in 0..<size {
             for c in 0..<size {
                 for s in 0..<size {
                     for a in 0..<size {
-                        fullDeck.append(Card(id: i, body: f(x, c, a, s) ))
+                        drawDeck.append(Card(id: i, body: f(x, c, a, s) ))
                         i+=1
                     }
                 }
             }
-        }        
-        fullDeck.shuffle()
-        drawCardsN(12)
+        }
+        fullDeck = drawDeck
+        prepare()
     }
     
-    mutating func drawCardsN(_ n: Int) {
-        for _ in 0..<n {
-            let temp = fullDeck.popLast()
+    mutating func prepare() {
+        drawDeck = fullDeck
+        visible.removeAll()
+        sInd.removeAll()
+        drawDeck.shuffle()
+        drawCard(Global.firstDraw)
+    }
+    
+    mutating func drawCard(_ amount: Int) {
+        for _ in 0..<amount {
+            let temp = drawDeck.popLast()
             if let temp {
-                deck.append(temp)
+                visible.append(temp)
             }
         }
     }
     
     mutating func selectCard(_ card: Card) {
-        ifAlready3Cards()
         if !card.isSelected {
-            let cardIndex = indexOfID(card.id)
+            let cardIndex = visible.firstIndex(where: {$0.id == card.id })
             if let cardIndex {
-                deck[cardIndex].isSelected = true
-                if !sInd.contains(where: {$0 == cardIndex}) {
+                visible[cardIndex].isSelected = true
+                if !sInd.contains(where: {$0 == cardIndex }) {
                     sInd.append(cardIndex)
                 }
-                if sInd.count == 3 {
+                if sInd.count == Global.size {
                     ifWrongVisual()
                 }
             }
-        } else if sInd.count < 3 {
+        } else if sInd.count < Global.size {
             deselect(card.id)
         }
     }
     
-    mutating private func ifAlready3Cards() {
-        if sInd.count == 3 {
-            if isSet() {
-                threeCardsBye()
-            } else {
-                sInd.forEach( {index in deck[index].isWrong = false} )
-            }
-            sInd.removeAll()
+    mutating func selectedAreFullAfter(itWasButton b: Bool) {
+        // FIXME: 13.09.2024 GPT-1o - Goodbye, World!
+        if isSet() {
+            removeSelectedCards(swap: b)
+        } else {
+            sInd.forEach({ index in visible[index].isWrong = false })
         }
+        sInd.removeAll()
     }
     
-    mutating func threeCardsBye() {
+    mutating private func removeSelectedCards(swap: Bool) {
         var diff = 0
-        sInd.sort(by: {(a, b) in a<b})
+        sInd.sort(by: {(a, b) in a<b })
         sInd.forEach( {index in
-            let temp = fullDeck.popLast()
-            if let temp {
-                deck[index] = temp
+            if swap {
+                let temp = drawDeck.popLast()
+                if let temp {
+                    visible[index] = temp
+                }
             } else {
-                deck.remove(at: index-diff)
+                visible.remove(at: index-diff)
                 diff+=1
             }
-        } )
+        })
     }
     
     mutating private func deselect(_ cardId: Int) {
-        let index = sInd.firstIndex(where: {deck[$0].id == cardId})
+        let index = sInd.firstIndex(where: {visible[$0].id == cardId })
         if let index {
-            deck[sInd[index]].isSelected = false
+            visible[sInd[index]].isSelected = false
             sInd.remove(at: index)
         }
+    }
+    
+    mutating func deselectAll() {
+        sInd.forEach( {visible[$0].isSelected = false })
     }
         
     mutating private func ifWrongVisual() {
         if !isSet() {
             sInd.forEach( {index in
-                deck[index].isSelected = false
-                deck[index].isWrong = true} )
+                visible[index].isSelected = false
+                visible[index].isWrong = true })
         }
     }
     
-    mutating func isSet() -> Bool {
-        let comp = oneTrait(ndx: sInd[0], ndx: sInd[1])
+    func isSet() -> Bool {
+        let comp = oneTrait(index: sInd[0], index: sInd[1])
         if comp != -1 {
-            return comp == oneTrait(ndx: sInd[1], ndx: sInd[2])
+            return comp == oneTrait(index: sInd[1], index: sInd[2])
         }
         return false
     }
-         
-    private func indexOfID(_ id: Int) -> Int? {
-        deck.firstIndex(where: {$0.id == id})
-    }
     
-    private func oneTrait(ndx i: Int, ndx u: Int) -> Int {
-        var countSame = 0
+    private func oneTrait(index i: Int, index u: Int) -> Int {
+        var oneFound = false
         var same: Int = -1
+        let c1 = visible[u].body
+        let c2 = visible[i].body
         
-        if (deck[u].body.x == deck[i].body.x) {
-            countSame+=1
+        if (c1.copies == c2.copies) {
+            oneFound = true
             same = 0
         }
-        if (deck[u].body.c == deck[i].body.c) {
-            countSame+=1
-            if countSame > 1 {
-                return -1
-            }
+        if (c1.color == c2.color) {
+            if oneFound { return -1 }
+            oneFound = true
             same = 1
         }
-        if (deck[u].body.sp == deck[i].body.sp) {
-            countSame+=1
-            if countSame > 1 {
-                return -1
-            }
+        if (c1.shape == c2.shape) {
+            if oneFound { return -1 }
+            oneFound = true
             same = 2
         }
-        if (deck[u].body.sd == deck[i].body.sd) {
-            countSame+=1
-            if countSame > 1 {
-                return -1
-            }
+        if (c1.shading == c2.shading) {
+            if oneFound { return -1 }
+            oneFound = true
             same = 3
         }
         return same
     }
     
-    struct Card: Identifiable {
+    struct Card: Identifiable, Hashable, Equatable {
         let id: Int
         var isSelected = false
         var isWrong = false
         var body: Content
+ 
+        static func == (lhs: SetRules<Content>.Card, 
+                        rhs: SetRules<Content>.Card) -> Bool {
+            lhs.id == rhs.id
+        }
         
-        func gs() -> Int {
-            body.sp
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
         }
-    }
-}
-
-protocol IntOfFeatures {
-    var x: Int {get}
-    var c: Int {get}
-    //var sd: Int {get}
-    var sd: Shading {get}
-    var sp: Int {get}
-}
-
-enum Shading {
-    case solid
-    case striped
-    case open
-    
-    static func fromInt(_ i: Int) -> Shading {
-        var temp: Shading
-        switch i {
-        case 0:
-            temp = Shading.striped
-        case 1:
-            temp = Shading.open
-        default:
-            temp = Shading.solid
-        }
-        return temp
     }
 }

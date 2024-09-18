@@ -13,7 +13,7 @@ struct Setv2App: App {
     
     var body: some Scene {
         WindowGroup {
-            ContentView(viewModel: game)
+            ContentView(SetView: game)
         }
     }
 }

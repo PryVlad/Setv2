@@ -8,82 +8,128 @@
 import SwiftUI
 
 class SetGame: ObservableObject {
-    static let shapes: [AnyShape] = [AnyShape(Circle()), AnyShape(Rectangle()), AnyShape(Ellipse())]
-    static let colorful: [Color] = [.purple,.blue,.green]
+    typealias Card = SetRules<Content>.Card
     
-    @Published private var model = createGame()
+    @Published private var setGame = createGame()
     
-    var cards: [Set<Content>.Card] {
-        model.deck
+    var cards: [Card] { setGame.visible }
+    var drawDeck: [Card] { setGame.drawDeck }
+    var isSet: Bool { setGame.isSet() }
+    var SCsize: Int { setGame.sInd.count }
+    var SCindices: [Int] {
+        setGame.sInd.sorted(by: {(a, b) in a<b })
     }
-    
-    static func createGame() -> Set<Content> {
-        Set<Content>( {(x: Int,c: Int,sd: Int, sp: Int) in
-            Content(x: 1, c: c, sd: Shading.fromInt(sd), sp: sp)} )
+    var isGameOver: Bool {
+        if setGame.drawDeck.isEmpty {
+            if setGame.visible.count == Global.size {
+                if setGame.sInd.count == Global.size {
+                    return true
+                }
+            }
+        }
+        return false
     }
+    var flipCount: Double = 0
+    var zIndexSwapID: [Card.ID] = [-1,-1,-1]
     
-    struct Content: View, IntOfFeatures {
-        var x: Int
-        var c: Int
-        //var sd: Int
-        var sd: Shading
-        var sp: Int
-        
-        var body: some View {  // somehow create only visible when game starts?
-            let shape = shady(shapes[sp], sd)
+    struct Content: View, FourFeatures {
+        let copies: Int
+        let color: ThreeVar
+        let shading: ThreeVar
+        let shape: ThreeVar
+
+        var body: some View {
+            let shape = makeViewOf(shape, shading)
             VStack {
                 shape
-                if x >= 1 {
+                if copies >= 1 {
                     shape
                 }
-                if x >= 2 {
+                if copies >= 2 {
                     shape
                 }
             }
-            .padding(9)
-            .foregroundStyle(colorful[c])
+            .foregroundStyle(colorSelect(color))
+        }
+    }
+    
+    func zIndexTop(_ cards: [Card]) {
+        for index in cards.indices {
+            zIndexSwapID[index] = cards[index].id
+        }
+    }
+    
+    func findCardsFrom(_ indices: [Int]) -> [Card] {
+        var a: [Card] = []
+        indices.forEach( {a.append(setGame.visible[$0]) })
+        return a
+    }
+    
+    func selectedFull(fromButton b: Bool) {
+        setGame.selectedAreFullAfter(itWasButton: b)
+    }
+    
+    func deselect() {
+        setGame.deselectAll()
+    }
+
+    static private func createGame() -> SetRules<Content> {
+        SetRules<Content>( {(x,c,sd,sp) in
+            Content(copies: x, color: ThreeVar.fromInt(c),
+                    shading: ThreeVar.fromInt(sd),
+                    shape: ThreeVar.fromInt(sp)) })
+    }
+    
+    static private func colorSelect(_ from: ThreeVar) -> Color{
+        switch from {
+        case .one:
+                .purple
+        case .two:
+                .green
+        default:
+                .blue
         }
     }
     
     @ViewBuilder
-    static private func shady(_ AS: AnyShape, _ s: Shading) -> some View {
-        switch s {
-        case .striped:
-            AS.opacity(0.4)
-        case .open:
-            AS.stroke(lineWidth: 6)
+    static private func applyModifier(_ shading: ThreeVar,
+                                      to s: some Shape & InsettableShape)
+    -> some View {
+        switch shading {
+        case .one:
+            s.opacity(0.4)
+        case .two:
+            s.stroke(lineWidth: 6)
         default:
-            AS
+            s
         }
     }
-        
-    func isDeckEmpty() -> Bool {
-        model.fullDeck.isEmpty
+    
+    @ViewBuilder
+    static private func makeViewOf(_ shape: ThreeVar, _ shading: ThreeVar)
+    -> some View {
+        switch shape {
+        case .one:
+            applyModifier(shading, to: Diamond())
+        case .two:
+            applyModifier(shading, to: AlmostSquiggle())
+        default:
+            applyModifier(shading, to: Capsule())
+        }
     }
     
     // MARK: - USER_FUNC
     
-    func choose(_ card: Set<Content>.Card) {
-        model.selectCard(card)
-        if model.fullDeck.isEmpty {
-            if model.deck.count == 3 {
-                if model.sInd.count == 3 {
-                    newGame()
-                }
-            }
-        }
+    func choose(_ card: Card) {
+        setGame.selectCard(card)
     }
     
     func drawThree() {
-        if model.sInd.count == 3 && model.isSet() {
-            model.threeCardsBye()
-        } else {
-            model.drawCardsN(3)
-        }
+        setGame.drawCard(Global.size)
     }
     
     func newGame() {
-        model = Set<Content>( {(x: Int,c: Int,sd: Int, sp: Int) in
-            Content(x: x, c: c, sd: Shading.fromInt(sd), sp: sp)} )
+        flipCount = 0
+        setGame.prepare()
     }
 }
