@@ -52,46 +52,29 @@ struct ContentView: View {
     }
     
     private func askNewGame() {
+        SetView.isDiscardShuffleActive = true
         SetView.deselect()
-        takeBack()
+        takeBackActive()
+        takeBackDiscarded()
         withAnimation {
             refresh = true
         }
     }
     
     private func newGame() {
+        SetView.newGame()
+        SetView.isDiscardShuffleActive = false
+        shuffledInDeck.removeAll()
         discardedCards.removeAll()
         flipState = Array(repeating: false,
-                          count: Global.fullDeckCount+1)
-        SetView.newGame()
+                          count: Global.fullDeckCount)
         refresh = false
         deal(SetView.cards, delay: false)
     }
     
     @State private var flipState =
-        Array(repeating: false, count: Global.fullDeckCount+1)
+        Array(repeating: false, count: Global.fullDeckCount)
     
-    private func flipIncrease() {
-        let firstDrawDone = flipState.last
-        if let firstDrawDone {
-            if firstDrawDone {
-                if SetView.flipCount < Double(Global.size) {
-                    SetView.flipCount += 1
-                } else {
-                    SetView.flipCount = 1
-                }
-            }
-            if !firstDrawDone {
-                if SetView.flipCount < Double(Global.firstDraw-1) {
-                    SetView.flipCount += 1
-                } else {
-                    flipState[flipState.endIndex-1] = true
-                    SetView.flipCount = 1
-                }
-            }
-        }
-    }
-
     var cards: some View {
         AspectVGrid(SetView.cards, aspectRatio:
                         Constants.ratioCard) { card in
@@ -110,13 +93,13 @@ struct ContentView: View {
                     .onAppear {
                         flipper(card.id)
                     }
-                    .zIndex(flipState[flipState.count-1]
-                            ? zIndexUpdate(card)
+                    .zIndex(SetView.isFirstDrawDone
+                            ? SetView.zIndexUpdate(card)
                             : 0)
             }
         }
     }
-    
+
     private func tapCard(_ card: Card) {
         ifDiscard()
         if SetView.SCsize == Global.size {
@@ -130,29 +113,19 @@ struct ContentView: View {
         }
     }
     
-    private func zIndexUpdate(_ card: Card) -> Double {
-        if SetView.SCsize == 0 {
-            if SetView.zIndexSwapID.contains(where: {
-                $0 == card.id }) {
-                return 2
-            }
-        }
-        return 0
-    } //FIXME: make efficient way to not cycle through stable cards
-    
     private func flipper(_ cardID: Int) {
         withAnimation(Constants.dealAnimation.delay(flipDelay())) {
-            flipIncrease()
+            SetView.flipIncrease()
             flipState[cardID] = true
         }
     }
     
     private func flipDelay() -> TimeInterval {
-        flipState[flipState.count-1]
+        SetView.isFirstDrawDone
         ? Constants.dealInterval*(SetView.flipCount
                                 + Constants.dealInterval)
         : Constants.dealInterval*SetView.flipCount
-                                + Constants.dealInterval+0.02
+                                + Constants.dealInterval
     }
     
     private func ifDiscard() {
@@ -172,6 +145,7 @@ struct ContentView: View {
     
     @State private var dealt = Set<Card.ID>()
     @State private var discardedCards: [Card] = []
+    @State private var shuffledInDeck = Set<Card.ID>()
     
     private func isDealt(_ card: Card) -> Bool {
         dealt.contains(card.id)
@@ -181,13 +155,27 @@ struct ContentView: View {
         SetView.cards.filter{ !isDealt($0) }
     }
     
+    private func isShuffledInDeck(_ card: Card) -> Bool {
+        if !SetView.isDiscardShuffleActive {
+            return false
+        }
+        return shuffledInDeck.contains(card.id)
+    }
+    
+    private var discardedAndShuffled: [Card] {
+        if !SetView.isDiscardShuffleActive {
+            return []
+        }
+        return discardedCards.filter{ isShuffledInDeck($0) }
+    }
+    
     @Namespace private var dealingNamespace
     @Namespace private var discardNamespace
     
     private var discardDeck: some View {
-        ZStack { //FIXME: newgame -> back into draw pile animation
-            if !refresh {
-                ForEach(discardedCards) { card in
+        ZStack {
+            ForEach(discardedCards) { card in
+                if !isShuffledInDeck(card) {
                     let index = discardedCards.firstIndex(of: card)
                     if let index {
                         card.body
@@ -196,8 +184,11 @@ struct ContentView: View {
                                      isFaceUp: true)
                             .offset(x: offsetDiscardCard(index))
                             .matchedGeometryEffect(id: card.id,
-                                                   in: discardNamespace)
-                            .transition(.identity)
+                                                   in: SetView.isDiscardShuffleActive
+                                                   ? dealingNamespace
+                                                   : discardNamespace)
+                            .transition(.asymmetric(insertion: .identity,
+                                                    removal: .identity))
                     }
                 }
             }
@@ -212,7 +203,8 @@ struct ContentView: View {
         
     private var deck: some View {
         ZStack (alignment: .bottom) {
-            ForEach(undealtCards+SetView.drawDeck) { card in
+            ForEach(undealtCards+SetView.drawDeck+discardedAndShuffled)
+            { card in
                 Image(systemName: "plus.square.fill")
                     .imageScale(Image.Scale.medium)
                     .foregroundStyle(.blue)
@@ -270,10 +262,18 @@ struct ContentView: View {
         }
     }
     
-    private func takeBack() {
+    private func takeBackActive() {
         for card in SetView.cards {
             withAnimation {
                 _ = dealt.remove(card.id)
+            }
+        }
+    }
+    
+    private func takeBackDiscarded() {
+        for card in discardedCards {
+            withAnimation {
+                _ = shuffledInDeck.insert(card.id)
             }
         }
     }
@@ -288,7 +288,7 @@ struct ContentView: View {
     private struct Constants {
         static let ratioCard: CGFloat = 1.02
         static let paddingCard: CGFloat = 6
-        static let dealAnimation: Animation = .snappy(duration: 0.2)
+        static let dealAnimation: Animation = .snappy(duration: 0.3)
         static let dealInterval: TimeInterval = 0.1
         static let deckWidth: CGFloat = 50
         static let discardPadding: CGFloat = 8

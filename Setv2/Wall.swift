@@ -31,6 +31,8 @@ class SetGame: ObservableObject {
     }
     var flipCount: Double = 0
     var zIndexSwapID: [Card.ID] = [-1,-1,-1]
+    var isFirstDrawDone = false
+    var isDiscardShuffleActive = false
     
     struct Content: View, FourFeatures {
         let copies: Int
@@ -72,6 +74,34 @@ class SetGame: ObservableObject {
     func deselect() {
         setGame.deselectAll()
     }
+    
+    func flipIncrease() {
+        if isFirstDrawDone {
+            if flipCount < Double(Global.size) {
+                flipCount += 1
+            } else {
+                flipCount = 1
+            }
+        }
+        if !isFirstDrawDone {
+            if flipCount < Double(Global.firstDraw-1) {
+                flipCount += 1
+            } else {
+                isFirstDrawDone = true
+                flipCount = 1
+            }
+        }
+    }
+    
+    func zIndexUpdate(_ card: Card) -> Double {
+        if SCsize == 0 {
+            if zIndexSwapID.contains(where: {
+                $0 == card.id }) {
+                return 2
+            }
+        }
+        return 0
+    } //FIXME: needs efficient way to not cycle through stable cards
 
     static private func createGame() -> SetRules<Content> {
         SetRules<Content>( {(x,c,sd,sp) in
@@ -118,7 +148,7 @@ class SetGame: ObservableObject {
         }
     }
     
-    // MARK: - USER_FUNC
+    // MARK: - Intent(s)
     
     func choose(_ card: Card) {
         setGame.selectCard(card)
@@ -129,6 +159,7 @@ class SetGame: ObservableObject {
     }
     
     func newGame() {
+        isFirstDrawDone = false
         flipCount = 0
         setGame.prepare()
     }
