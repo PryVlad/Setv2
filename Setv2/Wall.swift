@@ -30,7 +30,7 @@ class SetGame: ObservableObject {
         return false
     }
     var flipCount: Double = 0
-    var zIndexSwapID: [Card.ID] = [-1,-1,-1]
+    var zIndexSwapID = Set<Card.ID>()
     var isFirstDrawDone = false
     var isDiscardShuffleActive = false
     
@@ -56,9 +56,8 @@ class SetGame: ObservableObject {
     }
     
     func zIndexTop(_ cards: [Card]) {
-        for index in cards.indices {
-            zIndexSwapID[index] = cards[index].id
-        }
+        zIndexSwapID.removeAll()
+        cards.forEach( {zIndexSwapID.insert($0.id) })
     }
     
     func findCardsFrom(_ indices: [Int]) -> [Card] {
@@ -95,13 +94,12 @@ class SetGame: ObservableObject {
     
     func zIndexUpdate(_ card: Card) -> Double {
         if SCsize == 0 {
-            if zIndexSwapID.contains(where: {
-                $0 == card.id }) {
+            if zIndexSwapID.contains(card.id) {
                 return 2
             }
         }
         return 0
-    } //FIXME: needs efficient way to not cycle through stable cards
+    } //FIXME: horizontal orientation different
 
     static private func createGame() -> SetRules<Content> {
         SetRules<Content>( {(x,c,sd,sp) in
@@ -110,7 +108,7 @@ class SetGame: ObservableObject {
                     shape: ThreeVar.fromInt(sp)) })
     }
     
-    static private func colorSelect(_ from: ThreeVar) -> Color{
+    static private func colorSelect(_ from: ThreeVar) -> Color {
         switch from {
         case .one:
                 .purple
@@ -122,9 +120,9 @@ class SetGame: ObservableObject {
     }
     
     @ViewBuilder
-    static private func applyModifier(_ shading: ThreeVar,
-                                      to s: some Shape & InsettableShape)
-    -> some View {
+    static private func applyModifier(
+        _ shading: ThreeVar, to s: some Shape & InsettableShape
+    ) -> some View {
         switch shading {
         case .one:
             s.opacity(0.4)
@@ -136,8 +134,9 @@ class SetGame: ObservableObject {
     }
     
     @ViewBuilder
-    static private func makeViewOf(_ shape: ThreeVar, _ shading: ThreeVar)
-    -> some View {
+    static private func makeViewOf(
+        _ shape: ThreeVar, _ shading: ThreeVar
+    ) -> some View {
         switch shape {
         case .one:
             applyModifier(shading, to: Diamond())
@@ -160,6 +159,7 @@ class SetGame: ObservableObject {
     
     func newGame() {
         isFirstDrawDone = false
+        isDiscardShuffleActive = false
         flipCount = 0
         setGame.prepare()
     }

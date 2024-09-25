@@ -14,13 +14,22 @@ struct ContentView: View {
     
     @State private var refresh = false
     
+    @Environment(\.verticalSizeClass) private var verticalSizeClass
+    
     var body: some View {
-        topScreen
-        botPanel
+        HStack {
+            if verticalSizeClass == .compact {
+                vUserButtons
+            }
+            visibleCards
+        }
+        if verticalSizeClass == .regular {
+            hUserButtons
+        }
     }
     
     @ViewBuilder
-    var topScreen: some View {
+    var visibleCards: some View {
         if !refresh {
             cards
                 .onDisappear {
@@ -34,8 +43,8 @@ struct ContentView: View {
         }
     }
     
-    var botPanel: some View {
-        HStack { // FIXME: vstack if horizontal orientation
+    var hUserButtons: some View {
+        HStack(spacing: 0) {
             HStack {
                 Spacer()
                 sysButton(askNewGame, "arrow.clockwise.square.fill")
@@ -47,6 +56,18 @@ struct ContentView: View {
                 discardDeck
                     .padding(Constants.discardPadding)
             }
+        }
+        .font(.largeTitle)
+    }
+    
+    var vUserButtons: some View {
+        VStack(spacing: 0){
+            deck
+                .padding(.vertical)
+            Spacer()
+            discardDeck
+            sysButton(askNewGame, "arrow.clockwise.square.fill")
+                .padding(.vertical)
         }
         .font(.largeTitle)
     }
@@ -63,7 +84,6 @@ struct ContentView: View {
     
     private func newGame() {
         SetView.newGame()
-        SetView.isDiscardShuffleActive = false
         shuffledInDeck.removeAll()
         discardedCards.removeAll()
         flipState = Array(repeating: false,
@@ -93,11 +113,16 @@ struct ContentView: View {
                     .onAppear {
                         flipper(card.id)
                     }
-                    .zIndex(SetView.isFirstDrawDone
-                            ? SetView.zIndexUpdate(card)
-                            : 0)
+                    .zIndex(zIndex(card))
             }
         }
+    }
+    
+    private func zIndex(_ card: Card) -> Double {
+        if !SetView.isFirstDrawDone {
+            return 0
+        }
+        return SetView.zIndexUpdate(card)
     }
 
     private func tapCard(_ card: Card) {
@@ -156,17 +181,14 @@ struct ContentView: View {
     }
     
     private func isShuffledInDeck(_ card: Card) -> Bool {
-        if !SetView.isDiscardShuffleActive {
-            return false
-        }
-        return shuffledInDeck.contains(card.id)
+        shuffledInDeck.contains(card.id)
     }
     
     private var discardedAndShuffled: [Card] {
-        if !SetView.isDiscardShuffleActive {
-            return []
+        if dealt.isEmpty {
+            return discardedCards.filter{ isShuffledInDeck($0) }
         }
-        return discardedCards.filter{ isShuffledInDeck($0) }
+        return []
     }
     
     @Namespace private var dealingNamespace
@@ -182,7 +204,8 @@ struct ContentView: View {
                             .cardify(isWrong: index%2==0,
                                      isSelected: false,
                                      isFaceUp: true)
-                            .offset(x: offsetDiscardCard(index))
+                            .offset(x: offsetDiscardCard(index, x: true),
+                                    y: offsetDiscardCard(index, x: false) )
                             .matchedGeometryEffect(id: card.id,
                                                    in: SetView.isDiscardShuffleActive
                                                    ? dealingNamespace
@@ -197,8 +220,14 @@ struct ContentView: View {
                height: Constants.deckWidth/Constants.ratioCard)
     }
     
-    private func offsetDiscardCard(_ index: Int) -> CGFloat {
-        CGFloat(-Double(index) * Constants.discardOffset)
+    private func offsetDiscardCard(_ index: Int, x: Bool) -> CGFloat {
+        let v = verticalSizeClass == .regular && x
+        let h = verticalSizeClass == .compact && !x
+        
+        if v || h {
+           return CGFloat(-Double(index) * Constants.discardOffset)
+        }
+        return 0
     }
         
     private var deck: some View {
