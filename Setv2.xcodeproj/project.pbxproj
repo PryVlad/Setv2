@@ -11,7 +11,7 @@
 		9E0D47FA2C89D280009E648E /* Wall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0D47F92C89D280009E648E /* Wall.swift */; };
 		9E0D47FC2C89DBBE009E648E /* AspectVGrid.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E0D47FB2C89DBBE009E648E /* AspectVGrid.swift */; };
 		9E3070582C886E7F0029AAC0 /* Setv2App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3070572C886E7F0029AAC0 /* Setv2App.swift */; };
-		9E30705A2C886E7F0029AAC0 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3070592C886E7F0029AAC0 /* ContentView.swift */; };
+		9E30705A2C886E7F0029AAC0 /* ViewGameSET.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E3070592C886E7F0029AAC0 /* ViewGameSET.swift */; };
 		9E30705C2C886E810029AAC0 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9E30705B2C886E810029AAC0 /* Assets.xcassets */; };
 		9E30705F2C886E810029AAC0 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9E30705E2C886E810029AAC0 /* Preview Assets.xcassets */; };
 		9E98E45E2C8D781200CD52DC /* CardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9E98E45D2C8D781200CD52DC /* CardView.swift */; };
@@ -25,7 +25,7 @@
 		9E0D47FB2C89DBBE009E648E /* AspectVGrid.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AspectVGrid.swift; sourceTree = "<group>"; };
 		9E3070542C886E7F0029AAC0 /* Setv2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Setv2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9E3070572C886E7F0029AAC0 /* Setv2App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Setv2App.swift; sourceTree = "<group>"; };
-		9E3070592C886E7F0029AAC0 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		9E3070592C886E7F0029AAC0 /* ViewGameSET.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewGameSET.swift; sourceTree = "<group>"; };
 		9E30705B2C886E810029AAC0 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9E30705E2C886E810029AAC0 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		9E98E45D2C8D781200CD52DC /* CardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CardView.swift; sourceTree = "<group>"; };
@@ -65,7 +65,7 @@
 			children = (
 				9EABFD882C8F25F10075FB55 /* Globals.swift */,
 				9E3070572C886E7F0029AAC0 /* Setv2App.swift */,
-				9E3070592C886E7F0029AAC0 /* ContentView.swift */,
+				9E3070592C886E7F0029AAC0 /* ViewGameSET.swift */,
 				9E98E45D2C8D781200CD52DC /* CardView.swift */,
 				9E0D47FB2C89DBBE009E648E /* AspectVGrid.swift */,
 				9E0D47F72C8997F4009E648E /* Truth.swift */,
@@ -158,7 +158,7 @@
 				9E98E4602C8D806C00CD52DC /* Shapes.swift in Sources */,
 				9E0D47F82C8997F4009E648E /* Truth.swift in Sources */,
 				9E0D47FA2C89D280009E648E /* Wall.swift in Sources */,
-				9E30705A2C886E7F0029AAC0 /* ContentView.swift in Sources */,
+				9E30705A2C886E7F0029AAC0 /* ViewGameSET.swift in Sources */,
 				9EABFD892C8F25F10075FB55 /* Globals.swift in Sources */,
 				9E0D47FC2C89DBBE009E648E /* AspectVGrid.swift in Sources */,
 				9E98E45E2C8D781200CD52DC /* CardView.swift in Sources */,

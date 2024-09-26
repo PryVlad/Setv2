@@ -7,10 +7,10 @@
 
 import SwiftUI
 
-struct ContentView: View {
-    typealias Card = SetRules<SetGame.Content>.Card
+struct ViewGameSET: View {
+    typealias Card = SET.Card
 
-    @ObservedObject var SetView: SetGame
+    @ObservedObject var game: GameSET
     
     @State private var refresh = false
     
@@ -73,8 +73,8 @@ struct ContentView: View {
     }
     
     private func askNewGame() {
-        SetView.isDiscardShuffleActive = true
-        SetView.deselect()
+        game.isDiscardShuffleActive = true
+        game.deselect()
         takeBackActive()
         takeBackDiscarded()
         withAnimation {
@@ -83,20 +83,18 @@ struct ContentView: View {
     }
     
     private func newGame() {
-        SetView.newGame()
+        game.newGame()
         shuffledInDeck.removeAll()
         discardedCards.removeAll()
-        flipState = Array(repeating: false,
-                          count: Global.fullDeckCount)
+        flipState = GameSET.arrayFalseFilledFull()
         refresh = false
-        deal(SetView.cards, delay: false)
+        deal(game.cards, delay: false)
     }
     
-    @State private var flipState =
-        Array(repeating: false, count: Global.fullDeckCount)
+    @State private var flipState = GameSET.arrayFalseFilledFull()
     
     var cards: some View {
-        AspectVGrid(SetView.cards, aspectRatio:
+        AspectVGrid(game.cards, aspectRatio:
                         Constants.ratioCard) { card in
             if isDealt(card) {
                 CardView(card, isFaceUp: flipState[card.id])
@@ -113,51 +111,40 @@ struct ContentView: View {
                     .onAppear {
                         flipper(card.id)
                     }
-                    .zIndex(zIndex(card))
+                    .zIndex(game.zIndex(card))
             }
         }
-    }
-    
-    private func zIndex(_ card: Card) -> Double {
-        if !SetView.isFirstDrawDone {
-            return 0
-        }
-        return SetView.zIndexUpdate(card)
     }
 
     private func tapCard(_ card: Card) {
         ifDiscard()
-        if SetView.SCsize == Global.size {
-            SetView.selectedFull(fromButton: false)
+        if game.isSelectedFull {
+            game.selectedFull(fromButton: false)
         }
         withAnimation {
-            SetView.choose(card)
+            game.choose(card)
         }
-        if SetView.isGameOver {
+        if game.isGameOver {
             askNewGame()
         }
     }
     
     private func flipper(_ cardID: Int) {
-        withAnimation(Constants.dealAnimation.delay(flipDelay())) {
-            SetView.flipIncrease()
+        withAnimation(flipAnimation()) {
+            game.flipIncrease()
             flipState[cardID] = true
         }
     }
     
-    private func flipDelay() -> TimeInterval {
-        SetView.isFirstDrawDone
-        ? Constants.dealInterval*(SetView.flipCount
-                                + Constants.dealInterval)
-        : Constants.dealInterval*SetView.flipCount
-                                + Constants.dealInterval
+    private func flipAnimation() -> Animation {
+        Constants.dealAnimation.delay(game.flipDelay(Constants.dealInterval))
     }
     
     private func ifDiscard() {
-        if SetView.SCsize == Global.size {
-            if SetView.isSet {
+        if game.isSelectedFull {
+            if game.isSet {
                 var delay: TimeInterval = 0
-                for card in SetView.findCardsFrom(SetView.SCindices) {
+                for card in game.findCardsFrom(game.SCpointers) {
                     withAnimation(Constants.dealAnimation.delay(delay)) {
                         dealt.remove(card.id)
                         discardedCards.append(card)
@@ -177,7 +164,7 @@ struct ContentView: View {
     }
     
     private var undealtCards: [Card] {
-        SetView.cards.filter{ !isDealt($0) }
+        game.cards.filter{ !isDealt($0) }
     }
     
     private func isShuffledInDeck(_ card: Card) -> Bool {
@@ -200,14 +187,14 @@ struct ContentView: View {
                 if !isShuffledInDeck(card) {
                     let index = discardedCards.firstIndex(of: card)
                     if let index {
-                        card.body
+                        CardView.decode(card)
                             .cardify(isWrong: index%2==0,
                                      isSelected: false,
                                      isFaceUp: true)
                             .offset(x: offsetDiscardCard(index, x: true),
                                     y: offsetDiscardCard(index, x: false) )
                             .matchedGeometryEffect(id: card.id,
-                                                   in: SetView.isDiscardShuffleActive
+                                                   in: game.isDiscardShuffleActive
                                                    ? dealingNamespace
                                                    : discardNamespace)
                             .transition(.asymmetric(insertion: .identity,
@@ -232,7 +219,7 @@ struct ContentView: View {
         
     private var deck: some View {
         ZStack (alignment: .bottom) {
-            ForEach(undealtCards+SetView.drawDeck+discardedAndShuffled)
+            ForEach(undealtCards+game.drawDeck+discardedAndShuffled)
             { card in
                 Image(systemName: "plus.square.fill")
                     .imageScale(Image.Scale.medium)
@@ -252,37 +239,37 @@ struct ContentView: View {
             tapDeck()
         }
         .onAppear {
-            deal(SetView.cards, delay: false)
+            deal(game.cards, delay: false)
         }
     }
     
     private func tapDeck() {
         ifDiscard()
-        if SetView.SCsize == Global.size {
-            if !SetView.isSet {
-                SetView.selectedFull(fromButton: true)
-                drawTop()
+        if game.isSelectedFull {
+            if !game.isSet {
+                game.selectedFull(fromButton: true)
+                drawTopThree()
             } else {
-                let indices = SetView.SCindices
-                SetView.selectedFull(fromButton: true)
-                let swapCards = SetView.findCardsFrom(indices)
-                SetView.zIndexTop(swapCards)
+                let indices = game.SCpointers
+                game.selectedFull(fromButton: true)
+                let swapCards = game.findCardsFrom(indices)
+                game.zIndexTop(swapCards)
                 deal(swapCards, delay: true)
             }
         } else {
-            drawTop()
+            drawTopThree()
         }
     }
     
-    private func drawTop() {
-        SetView.drawThree()
-        deal(Array(SetView.cards.suffix(from:
-             SetView.cards.count-Global.size)), delay: false)
+    private func drawTopThree() {
+        game.drawThree()
+        deal(Array(game.cards.suffix(from:
+             game.cards.count-Global.sMax)), delay: false)
     }
     
     private func deal(_ array: [Card], delay: Bool) {
         var delayTime: TimeInterval = delay
-            ? Constants.dealInterval*Double(Global.size) : 0
+            ? Constants.dealInterval*Double(Global.sMax) : 0
         for card in array {
             withAnimation(Constants.dealAnimation.delay(delayTime)) {
                 _ = dealt.insert(card.id)
@@ -292,7 +279,7 @@ struct ContentView: View {
     }
     
     private func takeBackActive() {
-        for card in SetView.cards {
+        for card in game.cards {
             withAnimation {
                 _ = dealt.remove(card.id)
             }
@@ -339,5 +326,5 @@ struct ContentView: View {
 
 
 #Preview {
-    ContentView(SetView: SetGame())
+    ViewGameSET(game: GameSET())
 }

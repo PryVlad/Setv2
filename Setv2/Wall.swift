@@ -7,22 +7,21 @@
 
 import SwiftUI
 
-class SetGame: ObservableObject {
-    typealias Card = SetRules<Content>.Card
+class GameSET: ObservableObject {
+    typealias Card = SET.Card
     
-    @Published private var setGame = createGame()
+    @Published private var gameSET = SET()
     
-    var cards: [Card] { setGame.visible }
-    var drawDeck: [Card] { setGame.drawDeck }
-    var isSet: Bool { setGame.isSet() }
-    var SCsize: Int { setGame.sInd.count }
-    var SCindices: [Int] {
-        setGame.sInd.sorted(by: {(a, b) in a<b })
+    var cards: [Card] { gameSET.visible }
+    var drawDeck: [Card] { gameSET.drawDeck }
+    var isSet: Bool { gameSET.isSet() }
+    var SCpointers: [Int] {
+        gameSET.PNselected.sorted(by: { (a, b) in a<b })
     }
     var isGameOver: Bool {
-        if setGame.drawDeck.isEmpty {
-            if setGame.visible.count == Global.size {
-                if setGame.sInd.count == Global.size {
+        if gameSET.drawDeck.isEmpty {
+            if gameSET.visible.count == Global.sMax {
+                if gameSET.PNselected.count == Global.sMax {
                     return true
                 }
             }
@@ -30,53 +29,35 @@ class SetGame: ObservableObject {
         return false
     }
     var flipCount: Double = 0
-    var zIndexSwapID = Set<Card.ID>()
+    var zIndexNowSwapID = Set<Card.ID>()
     var isFirstDrawDone = false
     var isDiscardShuffleActive = false
-    
-    struct Content: View, FourFeatures {
-        let copies: Int
-        let color: ThreeVar
-        let shading: ThreeVar
-        let shape: ThreeVar
-
-        var body: some View {
-            let shape = makeViewOf(shape, shading)
-            VStack {
-                shape
-                if copies >= 1 {
-                    shape
-                }
-                if copies >= 2 {
-                    shape
-                }
-            }
-            .foregroundStyle(colorSelect(color))
-        }
+    var isSelectedFull: Bool {
+        gameSET.PNselected.count == Global.sMax
     }
     
     func zIndexTop(_ cards: [Card]) {
-        zIndexSwapID.removeAll()
-        cards.forEach( {zIndexSwapID.insert($0.id) })
+        zIndexNowSwapID.removeAll()
+        cards.forEach( {zIndexNowSwapID.insert($0.id) })
     }
     
     func findCardsFrom(_ indices: [Int]) -> [Card] {
         var a: [Card] = []
-        indices.forEach( {a.append(setGame.visible[$0]) })
+        indices.forEach( {a.append(gameSET.visible[$0]) })
         return a
     }
     
     func selectedFull(fromButton b: Bool) {
-        setGame.selectedAreFullAfter(itWasButton: b)
+        gameSET.selectedAreFullAfter(itWasButton: b)
     }
     
     func deselect() {
-        setGame.deselectAll()
+        gameSET.deselectAll()
     }
     
     func flipIncrease() {
         if isFirstDrawDone {
-            if flipCount < Double(Global.size) {
+            if flipCount < Double(Global.sMax) {
                 flipCount += 1
             } else {
                 flipCount = 1
@@ -93,74 +74,45 @@ class SetGame: ObservableObject {
     }
     
     func zIndexUpdate(_ card: Card) -> Double {
-        if SCsize == 0 {
-            if zIndexSwapID.contains(card.id) {
+        if gameSET.PNselected.count == 0 {
+            if zIndexNowSwapID.contains(card.id) {
                 return 2
             }
         }
         return 0
     } //FIXME: horizontal orientation different
-
-    static private func createGame() -> SetRules<Content> {
-        SetRules<Content>( {(x,c,sd,sp) in
-            Content(copies: x, color: ThreeVar.fromInt(c),
-                    shading: ThreeVar.fromInt(sd),
-                    shape: ThreeVar.fromInt(sp)) })
+    
+    func flipDelay(_ dealInterval: TimeInterval) -> TimeInterval {
+        isFirstDrawDone
+        ? dealInterval*(flipCount+dealInterval)
+        : dealInterval*flipCount+dealInterval
     }
     
-    static private func colorSelect(_ from: ThreeVar) -> Color {
-        switch from {
-        case .one:
-                .purple
-        case .two:
-                .green
-        default:
-                .blue
+    func zIndex(_ card: Card) -> Double {
+        if !isFirstDrawDone {
+            return 0
         }
+        return zIndexUpdate(card)
     }
     
-    @ViewBuilder
-    static private func applyModifier(
-        _ shading: ThreeVar, to s: some Shape & InsettableShape
-    ) -> some View {
-        switch shading {
-        case .one:
-            s.opacity(0.4)
-        case .two:
-            s.stroke(lineWidth: 6)
-        default:
-            s
-        }
-    }
-    
-    @ViewBuilder
-    static private func makeViewOf(
-        _ shape: ThreeVar, _ shading: ThreeVar
-    ) -> some View {
-        switch shape {
-        case .one:
-            applyModifier(shading, to: Diamond())
-        case .two:
-            applyModifier(shading, to: AlmostSquiggle())
-        default:
-            applyModifier(shading, to: Capsule())
-        }
+    static func arrayFalseFilledFull() -> [Bool] {
+        Array(repeating: false, count: Global.fullDeckCount)
     }
     
     // MARK: - Intent(s)
     
     func choose(_ card: Card) {
-        setGame.selectCard(card)
+        gameSET.selectCard(card)
     }
     
     func drawThree() {
-        setGame.drawCard(Global.size)
+        gameSET.drawCard(Global.sMax)
     }
     
     func newGame() {
         isFirstDrawDone = false
         isDiscardShuffleActive = false
         flipCount = 0
-        setGame.prepare()
+        gameSET.prepare()
     }
 }

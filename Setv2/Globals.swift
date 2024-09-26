@@ -8,13 +8,13 @@
 import Foundation
 
 struct Global {
-    static let size: Int = 3
-    static let firstDraw: Int = 12
+    static let sMax: Int = 3
+    static let features: Int = 4
+    static let firstDraw: Int = sMax * features
     static let fullDeckCount = countFullDeck()
     
     static func countFullDeck() -> Int {
-        var temp = size
-        let features = 4
+        var temp = sMax
         for _ in 2..<features {
             temp *= temp
         }
@@ -22,25 +22,18 @@ struct Global {
     }
 }
 
-protocol FourFeatures {
-    var copies: Int {get}
-    var color: ThreeVar {get}
-    var shading: ThreeVar {get}
-    var shape: ThreeVar {get}
-}
-
-enum ThreeVar {
+enum OneOfThree {
     case one, two, three
     
-    static func fromInt(_ i: Int) -> ThreeVar {
-        var temp: ThreeVar
+    static func fromInt(_ i: Int) -> OneOfThree {
+        var temp: OneOfThree
         switch i {
         case 0:
-            temp = ThreeVar.one
+            temp = OneOfThree.one
         case 1:
-            temp = ThreeVar.two
+            temp = OneOfThree.two
         default:
-            temp = ThreeVar.three
+            temp = OneOfThree.three
         }
         return temp
     }

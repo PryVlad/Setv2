@@ -8,21 +8,77 @@
 import SwiftUI
 
 struct CardView: View {
-    private let shakeCount: CGFloat = 3
-    let card: SetRules<SetGame.Content>.Card
+    typealias Card = SET.Card
+    
+    static private let shakeCount: CGFloat = 3
+    let card: Card
     let isFaceUp: Bool
     
-    init (_ c: SetRules<SetGame.Content>.Card, isFaceUp: Bool) {
+    init (_ c: Card, isFaceUp: Bool) {
         card = c
         self.isFaceUp = isFaceUp
     }
     
     var body: some View {
-        card.body
+        Self.decode(card)
             .cardify(isWrong: card.isWrong,
                      isSelected: card.isSelected,
                      isFaceUp: isFaceUp)
-            .shake(card.isWrong ? shakeCount : 0)
+            .shake(card.isWrong ? Self.shakeCount : 0)
+    }
+    
+    @ViewBuilder
+    static func decode(_ c: Card) -> some View {
+        let shape = makeViewOf(c.body.shape, c.body.shading)
+        VStack {
+            shape
+            if c.body.copies >= 1 {
+                shape
+            }
+            if c.body.copies >= 2 {
+                shape
+            }
+        }
+        .foregroundStyle(colorSelect(c.body.color))
+    }
+    
+    static private func colorSelect(_ from: OneOfThree) -> Color {
+        switch from {
+        case .one:
+                .purple
+        case .two:
+                .green
+        default:
+                .blue
+        }
+    }
+    
+    @ViewBuilder
+    static private func applyModifier(
+        _ shading: OneOfThree, to s: some Shape & InsettableShape
+    ) -> some View {
+        switch shading {
+        case .one:
+            s.opacity(0.4)
+        case .two:
+            s.stroke(lineWidth: 6)
+        default:
+            s
+        }
+    }
+    
+    @ViewBuilder
+    static private func makeViewOf(
+        _ shape: OneOfThree, _ shading: OneOfThree
+    ) -> some View {
+        switch shape {
+        case .one:
+            applyModifier(shading, to: Diamond())
+        case .two:
+            applyModifier(shading, to: AlmostSquiggle())
+        default:
+            applyModifier(shading, to: Capsule())
+        }
     }
 }
 
@@ -93,13 +149,13 @@ extension View {
 
 
 
-#Preview {
-    CardView(SetRules.Card(id: 7, isSelected: false, isWrong: false, 
-                      body: SetGame.Content(copies: 0,
-                                            color: ThreeVar.fromInt(0),
-                                            shading: ThreeVar.fromInt(0),
-                                            shape: ThreeVar.fromInt(0) )), 
+/*#Preview {
+    CardView(SET.Card(id: 7, isSelected: false, isWrong: false,
+                      body: GameSET.Content(copies: 0,
+                                            color: OneOfThree.fromInt(0),
+                                            shading: OneOfThree.fromInt(0),
+                                            shape: OneOfThree.fromInt(0) )), 
              isFaceUp: true)
         .aspectRatio(1, contentMode: .fit)
         .padding()
-}
+}*/

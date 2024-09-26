@@ -7,20 +7,24 @@
 
 import Foundation
 
-struct SetRules<Content: FourFeatures> {
+struct SET {
     private(set) var drawDeck: [Card] = []
     private(set) var visible: [Card] = []
-    private(set) var sInd: [Int] = []
+    private(set) var PNselected: [Int] = []
     private let fullDeck: [Card]
     
-    init(_ f: (_: Int, _: Int, _: Int, _: Int) -> Content) {
-        let size = Global.size
+    init() {
         var i = 0
-        for x in 0..<size {
-            for c in 0..<size {
-                for s in 0..<size {
-                    for a in 0..<size {
-                        drawDeck.append(Card(id: i, body: f(x, c, a, s) ))
+        for x in 0..<Global.sMax {
+            for c in 0..<Global.sMax {
+                for s in 0..<Global.sMax {
+                    for a in 0..<Global.sMax {
+                        drawDeck.append(Card(id: i, body: .init(
+                            copies: x,
+                            color: OneOfThree.fromInt(c),
+                            shading: OneOfThree.fromInt(a),
+                            shape: OneOfThree.fromInt(s)
+                        )))
                         i+=1
                     }
                 }
@@ -33,7 +37,7 @@ struct SetRules<Content: FourFeatures> {
     mutating func prepare() {
         drawDeck = fullDeck
         visible.removeAll()
-        sInd.removeAll()
+        PNselected.removeAll()
         drawDeck.shuffle()
         drawCard(Global.firstDraw)
     }
@@ -52,14 +56,14 @@ struct SetRules<Content: FourFeatures> {
             let cardIndex = visible.firstIndex(where: {$0.id == card.id })
             if let cardIndex {
                 visible[cardIndex].isSelected = true
-                if !sInd.contains(where: {$0 == cardIndex }) {
-                    sInd.append(cardIndex)
+                if !PNselected.contains(where: {$0 == cardIndex }) {
+                    PNselected.append(cardIndex)
                 }
-                if sInd.count == Global.size {
+                if PNselected.count == Global.sMax {
                     ifWrongVisual()
                 }
             }
-        } else if sInd.count < Global.size {
+        } else if PNselected.count < Global.sMax {
             deselect(card.id)
         }
     }
@@ -69,15 +73,15 @@ struct SetRules<Content: FourFeatures> {
         if isSet() {
             removeSelectedCards(swap: b)
         } else {
-            sInd.forEach({ index in visible[index].isWrong = false })
+            PNselected.forEach({ index in visible[index].isWrong = false })
         }
-        sInd.removeAll()
+        PNselected.removeAll()
     }
     
     mutating private func removeSelectedCards(swap: Bool) {
         var diff = 0
-        sInd.sort(by: {(a, b) in a<b })
-        sInd.forEach( {index in
+        PNselected.sort(by: {(a, b) in a<b })
+        PNselected.forEach( {index in
             if swap {
                 let temp = drawDeck.popLast()
                 if let temp {
@@ -91,29 +95,29 @@ struct SetRules<Content: FourFeatures> {
     }
     
     mutating private func deselect(_ cardId: Int) {
-        let index = sInd.firstIndex(where: {visible[$0].id == cardId })
+        let index = PNselected.firstIndex(where: {visible[$0].id == cardId })
         if let index {
-            visible[sInd[index]].isSelected = false
-            sInd.remove(at: index)
+            visible[PNselected[index]].isSelected = false
+            PNselected.remove(at: index)
         }
     }
     
     mutating func deselectAll() {
-        sInd.forEach( {visible[$0].isSelected = false })
+        PNselected.forEach( {visible[$0].isSelected = false })
     }
         
     mutating private func ifWrongVisual() {
         if !isSet() {
-            sInd.forEach( {index in
+            PNselected.forEach( {index in
                 visible[index].isSelected = false
                 visible[index].isWrong = true })
         }
     }
     
     func isSet() -> Bool {
-        let comp = oneTrait(index: sInd[0], index: sInd[1])
+        let comp = oneTrait(index: PNselected[0], index: PNselected[1])
         if comp != -1 {
-            return comp == oneTrait(index: sInd[1], index: sInd[2])
+            return comp == oneTrait(index: PNselected[1], index: PNselected[2])
         }
         return false
     }
@@ -150,15 +154,21 @@ struct SetRules<Content: FourFeatures> {
         let id: Int
         var isSelected = false
         var isWrong = false
-        var body: Content
+        let body: Content
  
-        static func == (lhs: SetRules<Content>.Card, 
-                        rhs: SetRules<Content>.Card) -> Bool {
+        static func == (lhs: SET.Card, rhs: SET.Card) -> Bool {
             lhs.id == rhs.id
         }
         
         func hash(into hasher: inout Hasher) {
             hasher.combine(id)
+        }
+        
+        struct Content: Hashable, Equatable {
+            let copies: Int
+            let color: OneOfThree
+            let shading: OneOfThree
+            let shape: OneOfThree
         }
     }
 }
